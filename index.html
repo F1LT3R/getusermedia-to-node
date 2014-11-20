@@ -1,0 +1,36 @@
+<h1>getusermedia-to-node</h1>
+
+<p>Click "Allow" to begin sending Microphone data to Node.js.
+Check the Node.js console to see the data being fed over a web socket.</p>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+  var socket = io('http://localhost');
+function gotStream(stream) {
+
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    var audioContext = new AudioContext();
+
+    var mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+
+    var audiopipe = audioContext.createScriptProcessor(1024, 2, 2);
+
+    audiopipe.onaudioprocess = function(e){
+        var buffer = e.inputBuffer.getChannelData(0);
+        socket.emit('audio', { data: buffer });
+    }
+
+    mediaStreamSource.connect(audiopipe);
+
+    audiopipe.connect(audioContext.destination);
+}
+
+function err(){
+ console.log('err:', arguments);
+}
+
+navigator.webkitGetUserMedia({audio:true}, gotStream, err);
+</script>
